@@ -1,0 +1,63 @@
+## Overview
+This project is a boilerplate for developers who want to start building an AI agent cluster faster and more efficient.
+
+## Concept: Multi-agent System (Supervisor Architecture)
+* Each AI agent cluster can have multiple AI agent crews (AI Crews)
+* Each AI crew can have multiple AI agent, leaded by a superviser (a default AI agent of an AI crew)
+* Each AI agent can call tools of attached MCP servers
+
+## How it works
+* An AI crew will contain many AI agents, leaded by a supervisor agent
+* These AI agents can communicate with each other to accomplish the goal
+* When a user chats with a crew, the supervisor agent will receive the input via API call
+* A supervisor agent will analyze the input prompt and the crew's capabilities (AI agents underneat and their tools from attached MCP servers), then decide whether it can answer instantly or create a detailed plan for the AI agents underneat to proceed
+* If the plan is created, it will request the AI agents to perform tasks
+* Then wait for all AI agents finish given tasks, make sure it's not hung too long
+* Grab all the results, analyze and respond to user based on the original input prompt.
+* All of these conversations are managed in database
+
+## Core Features
+* Create & manage AI crews easily (with a default supervisor agent, add/remove AI agents, change supervisor agent)
+* Create & manage AI agents easily (add/remove MCP tools)
+    * Custom system prompt
+    * Custom AI model
+* Create & manage MCP servers easily (supports Streamable HTTP transport only: `langchain-mcp-adapters`)
+* Create & manage all conversations of user with AI crews
+* Able to monitor all the activity logs of AI crews and AI agents easily
+* Expose API for frontend interaction (support streaming request)
+* Expose Swagger API Docs for frontend integration instructions
+
+## Technical Requirements
+* Programming language: Python
+* Store variables in `.env` file
+* AI framework: LangGraph (with OpenRouter AI API)
+* Supports Model Context Protocol (MCP) servers integration (for AI agents to use tool call: `langchain-mcp-adapters`)
+* Expose API for frontend (nextjs) interaction (support streaming request)
+* Expose API docs with swagger/redoc
+* Database: PostgreSQL (`id` is UUID)
+* Cloud storage: Cloudflare R2 bucket
+
+## Documentations & References
+* https://langchain-ai.github.io/langgraph/concepts/multi_agent/ (use `Supervisor` architecture)
+* https://github.com/langchain-ai/langgraph
+* https://openrouter.ai/docs/quickstart
+* https://langchain-ai.github.io/langgraph/agents/mcp/
+* https://github.com/langchain-ai/langchain-mcp-adapters
+
+## Instructions
+* always store relevent data, application's states, user's states,... in PostgreSQL
+* always create/update `PROJECT_OVERVIEW.md` after every task with:
+    * short description
+    * project structure (use `tree -L 3 -I 'node_modules|.git|.next'` to generate, then explain the directories briefly)
+    * features
+    * dependencies
+    * api routes
+    * changelog
+* always check `PROJECT_OVERVIEW.md` before starting a new task
+* always create/update `<feature>_TASKS.md` to manage todos in every feature implementation
+* always use `context7` to study dependencies/plugins/frameworks' docs carefully while implementing them
+* always implement error catching handler
+* always implement user-friendly flows
+* always follow security best practices
+* always commit your code after finishing fixing a bug or implementing a feature completely
+* always write tests for every feature
