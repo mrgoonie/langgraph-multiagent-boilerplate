@@ -44,6 +44,7 @@ def mock_services():
         # Use AsyncMock for async methods
         mock_conversation_service.add_message = AsyncMock(return_value=mock_message)
         mock_conversation_service.get_messages = AsyncMock(return_value=[])
+        mock_conversation_service.update_message_status = AsyncMock()
 
         # Setup mock crew service
         mock_crew = MagicMock()
