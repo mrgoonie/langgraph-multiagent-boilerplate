@@ -49,11 +49,20 @@ jobs:
       
       - name: Set up test environment
         run: |
-          cp .env.example .env.test
-          # Modify the database URL for CI testing
-          echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env.test
-          echo "DATABASE_SCHEMA=${{ env.DATABASE_SCHEMA }}" >> .env.test
-          echo "DEBUG=true" >> .env.test
+          # Create a clean .env.test file instead of appending to avoid variable concatenation issues
+          cat > .env.test << EOL
+          DATABASE_URL=${{ env.DATABASE_URL }}
+          DATABASE_SCHEMA=${{ env.DATABASE_SCHEMA }}
+          DEBUG=true
+          OPENROUTER_API_KEY=test-key
+          JWT_SECRET_KEY=test-secret-key
+          JWT_ALGORITHM=HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES=60
+          REFRESH_TOKEN_EXPIRE_DAYS=7
+          EOL
+          
+          # Show the content for debugging (redact sensitive values)
+          cat .env.test | grep -v "KEY\|TOKEN" || true
       
       - name: Create database schema
         run: |
