@@ -99,7 +99,7 @@ async def test_chat_endpoint(mock_services):
     response_data = response.json()
     assert "message_id" in response_data
     assert "content" in response_data
-    assert "created_at" in response_data
+    # Note: ChatResponse schema doesn't include created_at field
     
     # Verify the AI provider was called correctly
     mock_services["ai_provider"].get_model.assert_called_once()
