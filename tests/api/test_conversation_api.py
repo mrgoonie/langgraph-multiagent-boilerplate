@@ -34,20 +34,23 @@ def mock_services():
         mock_conversation.id = mock_conversation_id
         mock_conversation.crew_id = mock_crew_id
         mock_conversation.user_id = mock_user_id
-        mock_conversation_service.get_conversation.return_value = mock_conversation
+        # Use AsyncMock for async methods
+        mock_conversation_service.get_conversation = AsyncMock(return_value=mock_conversation)
 
         # Setup mock message
         mock_message = MagicMock()
         mock_message.id = uuid.uuid4()
         mock_message.content = "Test message"
-        mock_conversation_service.add_message.return_value = mock_message
-        mock_conversation_service.get_messages.return_value = []
+        # Use AsyncMock for async methods
+        mock_conversation_service.add_message = AsyncMock(return_value=mock_message)
+        mock_conversation_service.get_messages = AsyncMock(return_value=[])
 
         # Setup mock crew service
         mock_crew = MagicMock()
         mock_crew.id = mock_crew_id
         mock_crew.name = "Test Crew"
-        mock_crew_service.get_crew.return_value = mock_crew
+        # Use AsyncMock for async methods
+        mock_crew_service.get_crew = AsyncMock(return_value=mock_crew)
 
         # Setup mock agent service
         mock_agent = MagicMock()
@@ -55,7 +58,8 @@ def mock_services():
         mock_agent.name = "Supervisor"
         mock_agent.is_supervisor = True
         mock_agent.model = "openai/gpt-4-turbo"
-        mock_agent_service.get_agents.return_value = [mock_agent]
+        # Use AsyncMock for async methods
+        mock_agent_service.get_agents = AsyncMock(return_value=[mock_agent])
 
         # Setup mock AI provider
         mock_model = MagicMock()
