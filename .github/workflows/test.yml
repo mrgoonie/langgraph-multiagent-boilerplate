@@ -9,6 +9,8 @@ on:
 env:
   OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+  DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+  DATABASE_SCHEMA: public
 
 jobs:
   test:
@@ -49,35 +51,40 @@ jobs:
         run: |
           cp .env.example .env.test
           # Modify the database URL for CI testing
-          echo "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/test_db" >> .env.test
-          echo "DATABASE_SCHEMA=public" >> .env.test
+          echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env.test
+          echo "DATABASE_SCHEMA=${{ env.DATABASE_SCHEMA }}" >> .env.test
           echo "DEBUG=true" >> .env.test
       
       - name: Create database schema
         run: |
           python -c "
           import asyncio
+          import os
           from sqlalchemy.ext.asyncio import create_async_engine
           from app.db.base import Base
           
           async def create_tables():
-              engine = create_async_engine(
-                  'postgresql+asyncpg://postgres:postgres@localhost:5432/test_db',
-                  echo=True
-              )
+              database_url = os.environ.get('DATABASE_URL')
+              print(f'Using database URL: {database_url}')
+              engine = create_async_engine(database_url, echo=True)
               async with engine.begin() as conn:
                   await conn.run_sync(Base.metadata.create_all)
           
           asyncio.run(create_tables())
           "
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          DATABASE_SCHEMA: ${{ env.DATABASE_SCHEMA }}
       
       - name: Run tests
         run: |
           pytest -xvs --cov=app --cov-report=xml
         env:
           # Set necessary environment variables for tests
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY || 'test-key' }}
-          JWT_SECRET_KEY: "test-secret-key"
+          OPENROUTER_API_KEY: ${{ env.OPENROUTER_API_KEY || 'test-key' }}
+          JWT_SECRET_KEY: ${{ env.JWT_SECRET_KEY || 'test-secret-key' }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          DATABASE_SCHEMA: ${{ env.DATABASE_SCHEMA }}
           JWT_ALGORITHM: "HS256"
           
       - name: Upload coverage to Codecov
