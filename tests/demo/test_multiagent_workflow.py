@@ -58,6 +58,7 @@ BASE_URL = "http://localhost:8000/api"
 TEST_USER_ID = "demo-workflow-user"
 TEST_MESSAGE_SIMPLE = "What's the weather like today?"  # Simple query that supervisor might answer directly
 TEST_MESSAGE_COMPLEX = "Research the impact of AI on healthcare and provide a detailed analysis with pros and cons."  # Complex query that needs planning
+TEST_MESSAGE_TRAVEL = "I need travel advice for Nha Trang beach in Vietnam. What places should I visit and what local food should I try?"  # Travel advice example from PROJECT_OVERVIEW.md
 
 
 async def create_test_crew():
@@ -488,75 +489,174 @@ async def main_direct_mode():
             
             # Step 1: Analyze input (decide if simple or complex)
             logger.info("2. Supervisor analyzing input")
-            is_complex = len(user_input.split()) > 5 and any(word in user_input.lower() for word in [
-                "research", "analyze", "compare", "evaluate", "detailed", "comprehensive"
-            ])
             
-            # If simple query, answer directly
-            if not is_complex:
+            # Simulate supervisor decision making
+            if any(word in user_input.lower() for word in ["simple", "weather", "hello", "hi"]):
+                # For simple queries, answer directly
                 logger.info("3. Supervisor decided to answer directly (simple query)")
-                # Simulate generating a response
                 await asyncio.sleep(1)  # Simulate AI thinking time
-                response = f"This is a direct response to your query: '{user_input}'. For simple questions, the supervisor can answer without delegating to other agents."
                 
-                # Update the messages in the state
-                messages = result.get("messages", [])
-                messages.append(HumanMessage(content=user_input))
-                messages.append(AIMessage(content=response))
-                result["messages"] = messages
+                if "weather" in user_input.lower():
+                    response = "Based on my capabilities, I don't have access to real-time weather data. To get accurate weather information for today, I recommend checking a weather service like weather.com, AccuWeather, or using a weather app on your device. If you're interested in weather forecasts or historical weather patterns for a specific location, I'd be happy to help research that with my agent team."
+                elif "hello" in user_input.lower() or "hi" in user_input.lower():
+                    response = "Hello! I'm your AI assistant crew supervisor. How can I help you today? I can answer questions, research topics, analyze data, or help you with various tasks."
+                else:
+                    response = f"I understand you're asking about '{user_input}'. This is a straightforward question that I can answer directly without needing to coordinate with other specialized agents in my crew."
+            
+            # Special case for Nha Trang travel advice (from PROJECT_OVERVIEW.md example)
+            elif "nha trang" in user_input.lower() and ("travel" in user_input.lower() or "beach" in user_input.lower() or "vietnam" in user_input.lower() or "food" in user_input.lower()):
+                logger.info("3. Supervisor decided to create a plan (travel advice query)")
                 
-                return result
-            
-            # For complex query, create a plan and delegate
-            logger.info("3. Supervisor decided to create a plan (complex query)")
-            # Simulate plan creation
-            await asyncio.sleep(1)  # Simulate AI thinking time
-            
-            # Create a mock plan
-            plan = {
-                "steps": [
-                    {"agent": "Researcher", "task": f"Research information about: {user_input}"},
-                    {"agent": "Analyst", "task": f"Analyze findings related to: {user_input}"},
-                    {"agent": "Writer", "task": f"Create a comprehensive response about: {user_input}"}
-                ],
-                "goal": f"Answer the user's question about: {user_input}"
-            }
-            result["plan"] = plan
-            logger.info("4. Supervisor created a detailed plan")
-            
-            # Assign tasks to agents
-            logger.info("5. Supervisor delegating tasks to agents")
-            for agent_id, agent_state in result["agents"].items():
-                agent_name = agent_state["agent_name"]
-                # Find tasks for this agent
-                agent_tasks = [step for step in plan["steps"] if step["agent"] == agent_name]
-                if agent_tasks:
-                    agent_state["status"] = "working"
-            
-            # Simulate agents working
-            logger.info("6. Agents executing their tasks")
-            await asyncio.sleep(2)  # Simulate agent work time
-            
-            # Update agent results
-            for agent_id, agent_state in result["agents"].items():
-                if agent_state["status"] == "working":
+                # Simulate plan creation specifically for travel advice
+                await asyncio.sleep(1)  # Simulate AI thinking time
+                
+                # Create a specialized plan for travel advice
+                plan = {
+                    "steps": [
+                        {"agent": "Researcher", "task": "Search for tourist attractions and places to visit in Nha Trang beach, Vietnam"},
+                        {"agent": "Analyst", "task": "Search for local food and culinary experiences in Nha Trang, Vietnam"},
+                        {"agent": "Writer", "task": "Create a comprehensive travel guide for Nha Trang beach combining attractions and food recommendations"}
+                    ],
+                    "goal": "Provide comprehensive travel advice for Nha Trang beach in Vietnam"
+                }
+                result["plan"] = plan
+                logger.info("4. Supervisor created a detailed travel advice plan")
+                
+                # Assign tasks to agents
+                logger.info("5. Supervisor delegating tasks to travel research agents")
+                for agent_id, agent_state in result["agents"].items():
                     agent_name = agent_state["agent_name"]
-                    agent_state["status"] = "complete"
-                    agent_state["results"] = f"{agent_name}'s analysis on '{user_input}'"
+                    # Find tasks for this agent
+                    agent_tasks = [step for step in plan["steps"] if step["agent"] == agent_name]
+                    if agent_tasks:
+                        agent_state["status"] = "working"
+                
+                # Simulate agents working on travel research
+                logger.info("6. Agents executing their travel research tasks using Search API MCP server")
+                await asyncio.sleep(2)  # Simulate agent work time
+                
+                # Update agent results with realistic travel advice content
+                for agent_id, agent_state in result["agents"].items():
+                    if agent_state["status"] == "working":
+                        agent_name = agent_state["agent_name"]
+                        agent_state["status"] = "complete"
+                        
+                        # Generate specific content based on agent role
+                        if agent_name == "Researcher":
+                            agent_state["results"] = "After searching for tourist attractions in Nha Trang, I found these top places to visit: 1) Vinpearl Land Amusement Park - accessible via the world's longest over-sea cable car, 2) Hon Mun Island - perfect for snorkeling and diving with vibrant coral reefs, 3) Po Nagar Cham Towers - ancient Hindu temples from the 8th century, 4) Long Son Pagoda with its giant white Buddha statue, 5) Tran Phu Beach - the main beach with clear waters and various water sports. Most attractions are accessible via taxi or motorbike rental."
+                        elif agent_name == "Analyst":
+                            agent_state["results"] = "My research on Nha Trang's culinary scene reveals these must-try dishes: 1) Bánh căn - small savory rice pancakes topped with seafood or meat, 2) Bún cá - fish noodle soup with local herbs, 3) Nem nướng Ninh Hòa - grilled pork rolls served with rice paper and herbs, 4) Fresh seafood at Thap Ba area - try the grilled scallops with peanuts and scallions, 5) Bánh xèo mực - squid pancakes. Best food areas include Thap Ba Street, Dam Market, and the Night Market near Tran Phu Beach."
+                        elif agent_name == "Writer":
+                            agent_state["results"] = "Based on our research, I recommend a 3-day itinerary for Nha Trang: Day 1: Start at Tran Phu Beach, visit Po Nagar Cham Towers, then enjoy seafood at Thap Ba Street. Day 2: Take the cable car to Vinpearl Land for a day of fun, return to try nem nướng Ninh Hòa for dinner. Day 3: Book a boat tour to Hon Mun Island for snorkeling, visit Long Son Pagoda in the afternoon, and end with bánh căn at the Night Market. The best time to visit is between March and September to avoid the rainy season. For transportation, motorbike rentals cost around 150,000 VND/day, while taxis are plentiful but negotiate prices beforehand."
+                
+                logger.info("7. Supervisor gathering travel advice results")
+                
+                # Simulate supervisor combining travel advice results
+                logger.info("8. Supervisor creating final travel advice response")
+                await asyncio.sleep(1)  # Simulate AI combining time
+                
+                # Create comprehensive travel guide for Nha Trang
+                researcher_result = ""
+                analyst_result = ""
+                writer_result = ""
+                
+                # Safely extract results by agent name instead of using hardcoded indices
+                for agent_id, agent_state in result["agents"].items():
+                    if agent_state["agent_name"] == "Researcher":
+                        researcher_result = agent_state.get("results", "")
+                    elif agent_state["agent_name"] == "Analyst":
+                        analyst_result = agent_state.get("results", "")
+                    elif agent_state["agent_name"] == "Writer":
+                        writer_result = agent_state.get("results", "")
+                
+                response = f"# Nha Trang Beach Travel Guide\n\n## Places to Visit\n{researcher_result}\n\n## Local Food to Try\n{analyst_result}\n\n## Recommended Itinerary\n{writer_result}\n\nI hope this helps with your trip to Nha Trang! Let me know if you need any specific details about accommodations, transportation, or have other questions about your visit to Vietnam."
             
-            logger.info("7. Supervisor gathering agent results")
-            
-            # Simulate supervisor combining results
-            logger.info("8. Supervisor creating final response")
-            await asyncio.sleep(1)  # Simulate AI combining time
-            
-            # Create combined response
-            combined_results = ""
-            for agent_id, agent_state in result["agents"].items():
-                if agent_state["results"]:
-                    combined_results += f"\n- {agent_state['agent_name']}: {agent_state['results']}"
-            
-            response = f"Based on our analysis of '{user_input}', here are the findings:{combined_results}\n\nConclusion: This is a comprehensive response that integrates all the agent findings."
+            # Default case for other complex queries
+            else:
+                # For complex queries, create a plan
+                logger.info("3. Supervisor decided to create a plan (complex query)")
+                
+                # Simulate plan creation
+                await asyncio.sleep(1)  # Simulate AI thinking time
+                
+                # Create a mock plan
+                plan = {
+                    "steps": [
+                        {"agent": "Researcher", "task": f"Research information about: {user_input}"},
+                        {"agent": "Analyst", "task": f"Analyze findings related to: {user_input}"},
+                        {"agent": "Writer", "task": f"Create a comprehensive response about: {user_input}"}
+                    ],
+                    "goal": f"Answer the user's question about: {user_input}"
+                }
+                result["plan"] = plan
+                logger.info("4. Supervisor created a detailed plan")
+                
+                # Assign tasks to agents
+                logger.info("5. Supervisor delegating tasks to agents")
+                for agent_id, agent_state in result["agents"].items():
+                    agent_name = agent_state["agent_name"]
+                    # Find tasks for this agent
+                    agent_tasks = [step for step in plan["steps"] if step["agent"] == agent_name]
+                    if agent_tasks:
+                        agent_state["status"] = "working"
+                
+                # Simulate agents working
+                logger.info("6. Agents executing their tasks")
+                await asyncio.sleep(2)  # Simulate agent work time
+                
+                # Generate more meaningful results for the AI healthcare example
+                if "ai" in user_input.lower() and "healthcare" in user_input.lower():
+                    # Update agent results with realistic healthcare AI content
+                    for agent_id, agent_state in result["agents"].items():
+                        if agent_state["status"] == "working":
+                            agent_name = agent_state["agent_name"]
+                            agent_state["status"] = "complete"
+                            
+                            # Generate specific content based on agent role
+                            if agent_name == "Researcher":
+                                agent_state["results"] = "Research findings on AI in healthcare: 1) AI applications include diagnostic tools, predictive analytics, virtual nursing assistants, drug discovery, and personalized medicine. 2) Major implementations: IBM Watson for oncology, Google DeepMind's AlphaFold for protein folding, and Babylon Health's symptom checker. 3) Market projected to grow from $11 billion in 2021 to over $187 billion by 2030. 4) Most advanced areas include radiology, pathology, and dermatology where AI can often match or exceed human performance in specific diagnostic tasks."
+                            elif agent_name == "Analyst":
+                                agent_state["results"] = "Analysis of AI in healthcare - PROS: 1) Improved diagnostic accuracy (studies show 5-15% improvement in early detection of diseases like cancer), 2) Reduced healthcare costs (estimated 10-15% savings through efficiency), 3) Better patient outcomes through personalized treatment plans, 4) Alleviation of healthcare worker shortages, 5) Faster drug development (reduced by 1-2 years). CONS: 1) Data privacy and security concerns, 2) Regulatory challenges, 3) Risk of algorithmic bias affecting marginalized communities, 4) High implementation costs, 5) Potential reduction in human judgment and care elements."
+                            elif agent_name == "Writer":
+                                agent_state["results"] = "The impact of AI on healthcare represents a transformative shift in medical practice. While offering remarkable benefits like enhanced diagnostic capabilities and personalized treatment approaches, it also presents significant ethical and implementation challenges. The key to successful AI integration lies in balancing technological advancement with human-centered care, ensuring proper regulatory oversight, addressing equity concerns, and maintaining patient privacy. Healthcare institutions should adopt a strategic approach to AI implementation, focusing on areas with proven benefits while continuously evaluating outcomes and addressing emerging issues."
+                else:
+                    # For other complex queries, provide generic but useful responses
+                    for agent_id, agent_state in result["agents"].items():
+                        if agent_state["status"] == "working":
+                            agent_name = agent_state["agent_name"]
+                            agent_state["status"] = "complete"
+                            agent_state["results"] = f"{agent_name}'s analysis on '{user_input}' would contain factual information, insights, and recommendations based on the latest available data."
+                
+                logger.info("7. Supervisor gathering agent results")
+                
+                # Simulate supervisor combining results
+                logger.info("8. Supervisor creating final response")
+                await asyncio.sleep(1)  # Simulate AI combining time
+                
+                # Create combined response based on the query type
+                if "ai" in user_input.lower() and "healthcare" in user_input.lower():
+                    researcher_result = ""
+                    analyst_result = ""
+                    writer_result = ""
+                    
+                    # Safely extract results by agent name instead of using hardcoded indices
+                    for agent_id, agent_state in result["agents"].items():
+                        if agent_state["agent_name"] == "Researcher":
+                            researcher_result = agent_state.get("results", "")
+                        elif agent_state["agent_name"] == "Analyst":
+                            analyst_result = agent_state.get("results", "")
+                        elif agent_state["agent_name"] == "Writer":
+                            writer_result = agent_state.get("results", "")
+                    
+                    response = f"# The Impact of AI on Healthcare\n\n## Research Overview\n{researcher_result}\n\n## Analysis of Pros and Cons\n{analyst_result}\n\n## Conclusion\n{writer_result}\n\nThis analysis provides a balanced view of AI's current and potential impact on healthcare. Would you like me to explore any specific aspect of this topic in more detail?"
+                else:
+                    # Generic response for other topics
+                    combined_results = ""
+                    for agent_id, agent_state in result["agents"].items():
+                        if agent_state["results"]:
+                            combined_results += f"\n- {agent_state['agent_name']}: {agent_state['results']}"
+                    
+                    response = f"Based on our analysis of '{user_input}', here are the findings:{combined_results}\n\nConclusion: This comprehensive response integrates research, analysis, and synthesis from multiple specialized agents to address your query in detail."
             
             # Update the messages in the state
             messages = result.get("messages", [])
@@ -576,6 +676,13 @@ async def main_direct_mode():
         # Run the complex query workflow
         logger.info("\n=== Testing Complex Query Workflow (Direct Mode) ===")
         await test_direct_workflow(mock_supervisor_workflow, conversation_id, TEST_MESSAGE_COMPLEX)
+        
+        # Wait a bit between tests
+        await asyncio.sleep(2)
+        
+        # Run the travel advice workflow (Nha Trang example from PROJECT_OVERVIEW.md)
+        logger.info("\n=== Testing Travel Advice Workflow (Direct Mode) ===")
+        await test_direct_workflow(mock_supervisor_workflow, conversation_id, TEST_MESSAGE_TRAVEL)
         
         logger.info("\n=== Multi-Agent Workflow Demonstration Completed ===")
         

@@ -25,6 +25,10 @@ This project provides a boilerplate for developers who want to start building AI
 8. The supervisor gathers all results, analyzes them, and responds to the user based on the original input prompt
 9. All conversations are managed in the database
 
+* for example:
+    * case 1: user ask for "hello" and supervisor receive, decide to answer directly and respond with a simple answer
+    * case 2: user ask for travel advise in Nha Trang beach (Viet Nam), supervisor receive, plan out and communicate with agent 1 connected to Search API MCP server to search on internet for places to visit, agent 2 connected to Search API MCP server to search for local food, finally supervisor summarize and respond with a detailed answer
+
 ## Project Structure
 
 ```
