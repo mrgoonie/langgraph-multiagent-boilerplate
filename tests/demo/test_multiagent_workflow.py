@@ -154,6 +154,9 @@ async def create_conversation(crew_id):
                 raise Exception(f"Failed to create conversation: {response.status}")
 
 
+import pytest
+
+@pytest.mark.skip(reason="Demo test requires local running API server and fixtures not available in CI")
 async def test_chat_with_monitoring(conversation_id, message):
     """
     Test the chat endpoint with real-time monitoring of the multi-agent workflow.
