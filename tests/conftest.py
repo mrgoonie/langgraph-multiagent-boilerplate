@@ -21,8 +21,10 @@ from app.models.crew import Crew, Agent, MCPServer, MCPTool
 from app.models.conversation import Conversation, Message, MessageRole, MessageStatus
 
 
-# Use in-memory SQLite for tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Use in-memory SQLite for local tests, PostgreSQL for CI
+# Check if we're running in CI by looking for DATABASE_URL environment variable
+TEST_DATABASE_URL = os.environ.get("DATABASE_URL") or "sqlite+aiosqlite:///:memory:"
+print(f"Using database URL for tests: {TEST_DATABASE_URL}")
 
 
 # Create a test engine and session factory
@@ -48,15 +50,33 @@ async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture
 async def setup_test_db():
     """Set up a test database with tables"""
-    # Create all tables
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    yield
-    
-    # Drop all tables
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # For SQLite in-memory, create tables and drop them after tests
+    if 'sqlite' in TEST_DATABASE_URL:
+        # Create all tables
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        
+        yield
+        
+        # Drop all tables
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+    else:
+        # For PostgreSQL in CI, tables are created by the GitHub workflow script
+        # We'll truncate tables after tests to keep the DB clean
+        yield
+        
+        # Clean up data but keep tables
+        try:
+            async with test_engine.begin() as conn:
+                # Get all table names
+                tables = Base.metadata.tables.keys()
+                for table in tables:
+                    # Use truncate instead of drop
+                    await conn.execute(f"TRUNCATE TABLE {table} CASCADE")
+        except Exception as e:
+            print(f"Error cleaning up tables: {e}")
+            # Continue without failing tests
 
 
 @pytest.fixture
