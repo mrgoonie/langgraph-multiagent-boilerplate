@@ -46,9 +46,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           # Install additional test dependencies
-          pip install pytest-asyncio pytest-cov aiosqlite asyncpg
+          pip install pytest-asyncio pytest-cov aiosqlite asyncpg aiohttp langchain langchain-core langchain-openai
+          # Install langgraph dependencies
+          pip install langgraph "langchain-mcp-adapters>=0.0.3" openrouter
           # Show installed packages for debugging
-          pip list | grep -E 'sqlalchemy|asyncpg|aiosqlite|pytest'
+          pip list | grep -E 'sqlalchemy|asyncpg|aiosqlite|pytest|aiohttp|langchain|openrouter'
       
       - name: Set up test environment
         run: |
