@@ -1,0 +1,87 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        # Health check to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest-asyncio pytest-cov
+      
+      - name: Set up test environment
+        run: |
+          cp .env.example .env.test
+          # Modify the database URL for CI testing
+          echo "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/test_db" >> .env.test
+          echo "DATABASE_SCHEMA=public" >> .env.test
+          echo "DEBUG=true" >> .env.test
+      
+      - name: Create database schema
+        run: |
+          python -c "
+          import asyncio
+          from sqlalchemy.ext.asyncio import create_async_engine
+          from app.db.base import Base
+          
+          async def create_tables():
+              engine = create_async_engine(
+                  'postgresql+asyncpg://postgres:postgres@localhost:5432/test_db',
+                  echo=True
+              )
+              async with engine.begin() as conn:
+                  await conn.run_sync(Base.metadata.create_all)
+          
+          asyncio.run(create_tables())
+          "
+      
+      - name: Run tests
+        run: |
+          pytest -xvs --cov=app --cov-report=xml
+        env:
+          # Set necessary environment variables for tests
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY || 'test-key' }}
+          JWT_SECRET_KEY: "test-secret-key"
+          JWT_ALGORITHM: "HS256"
+          
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
