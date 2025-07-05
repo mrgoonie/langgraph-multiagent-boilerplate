@@ -66,6 +66,9 @@ def mock_services():
         mock_model.invoke = AsyncMock(return_value=MagicMock(content="Test AI response"))
         mock_ai_provider.get_model.return_value = mock_model
 
+        # Setup activity log service
+        mock_activity_log_service.log_activity = AsyncMock()
+        
         yield {
             "conversation_service": mock_conversation_service,
             "crew_service": mock_crew_service,
