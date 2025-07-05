@@ -22,9 +22,17 @@ from app.models.conversation import Conversation, Message, MessageRole, MessageS
 
 
 # Use in-memory SQLite for local tests, PostgreSQL for CI
-# Check if we're running in CI by looking for DATABASE_URL environment variable
-TEST_DATABASE_URL = os.environ.get("DATABASE_URL") or "sqlite+aiosqlite:///:memory:"
-print(f"Using database URL for tests: {TEST_DATABASE_URL}")
+# Check if we're running in CI by looking# Get database URL from environment or use SQLite in-memory as default
+TEST_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
+# Ensure we're using the right async driver for PostgreSQL
+if "postgresql:" in TEST_DATABASE_URL or "postgres:" in TEST_DATABASE_URL:
+    # Replace postgresql: or postgres: with postgresql+asyncpg: to use async driver
+    TEST_DATABASE_URL = TEST_DATABASE_URL.replace("postgresql:", "postgresql+asyncpg:")
+    TEST_DATABASE_URL = TEST_DATABASE_URL.replace("postgres:", "postgresql+asyncpg:")
+    print(f"Using database URL for tests: {TEST_DATABASE_URL.replace('postgres:', '***')}")
+else:
+    print(f"Using database URL for tests: {TEST_DATABASE_URL}")
 
 
 # Create a test engine and session factory
