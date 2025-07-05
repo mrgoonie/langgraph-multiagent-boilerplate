@@ -270,6 +270,7 @@ async def fetch_conversation_messages(session, conversation_id):
             logger.error(f"Failed to fetch conversation messages: {response.status}")
 
 
+@pytest.mark.skip(reason="Demo test requires local running API server and fixtures not available in CI")
 async def test_streaming_chat(conversation_id, message):
     """Test the streaming chat endpoint with a complex query"""
     logger.info(f"Testing streaming chat with message: '{message}'")
