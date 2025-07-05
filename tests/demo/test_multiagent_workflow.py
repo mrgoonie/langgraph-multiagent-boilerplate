@@ -347,6 +347,7 @@ async def main_api_mode():
         logger.error(f"Error in workflow demonstration (API mode): {str(e)}", exc_info=True)
 
 
+@pytest.mark.skip(reason="Demo test requires fixtures not available in CI")
 async def test_direct_workflow(supervisor_func, conversation_id, message):
     """Test the supervisor workflow directly without using HTTP endpoints"""
     from langchain_core.messages import HumanMessage, AIMessage
